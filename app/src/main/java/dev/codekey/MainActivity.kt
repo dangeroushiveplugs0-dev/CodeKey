@@ -81,6 +81,26 @@ class MainActivity : Activity() {
         }
         content.addView(requestInput)
         content.addView(actionButton("Generate offline code") { generate() })
+        content.addView(TextView(this).apply {
+            text = "Optional online AI (OpenAI-compatible endpoint)"
+            textSize = 16f
+            setTextColor(Color.rgb(137, 180, 250))
+            setPadding(0, 14, 0, 4)
+        })
+        val prefs = getSharedPreferences("codekey_settings", Context.MODE_PRIVATE)
+        onlineEndpoint = settingsField("Endpoint URL", prefs.getString("endpoint", "https://api.openai.com/v1/chat/completions") ?: "")
+        onlineModel = settingsField("Model name", prefs.getString("model", "") ?: "")
+        onlineKey = settingsField("API key (not saved)", "", true)
+        content.addView(onlineEndpoint)
+        content.addView(onlineModel)
+        content.addView(onlineKey)
+        content.addView(actionButton("Send instruction to online AI") { generateOnline() })
+        content.addView(TextView(this).apply {
+            text = "Online mode sends the instruction you typed and the selected language to the endpoint you configure. Do not enter passwords or secrets. CodeKey does not save the API key."
+            textSize = 12f
+            setTextColor(Color.GRAY)
+            setPadding(0, 4, 0, 8)
+        })
 
         val scroll = ScrollView(this)
         val results = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
