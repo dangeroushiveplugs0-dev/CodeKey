@@ -20,11 +20,11 @@ import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
-import dev.codekey.engine.EnglishCodeAssistant
+import dev.codekey.engine.SuggestionEngine
 import dev.codekey.engine.Language
 
 class MainActivity : Activity() {
-    private val assistant = EnglishCodeAssistant()
+    private val assistant = SuggestionEngine()
     private lateinit var requestInput: EditText
     private lateinit var languagePicker: Spinner
     private lateinit var codeOutput: TextView
@@ -116,7 +116,7 @@ class MainActivity : Activity() {
 
     private fun generate() {
         val language = languages.getOrElse(languagePicker.selectedItemPosition) { Language.AUTO }
-        val result = assistant.generate(requestInput.text.toString(), language)
+        val result = assistant.generateFromEnglish(requestInput.text.toString(), language)
         generatedCode = result.code
         codeOutput.text = if (result.code.isBlank()) "Enter an instruction first." else result.code
         explanationOutput.text = result.explanation
