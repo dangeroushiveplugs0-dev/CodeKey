@@ -96,13 +96,12 @@ class MainActivity : Activity() {
         content.addView(onlineKey)
         content.addView(actionButton("Send instruction to online AI") { generateOnline() })
         content.addView(TextView(this).apply {
-            text = "Online mode sends the instruction you typed and the selected language to the endpoint you configure. Do not enter passwords or secrets. CodeKey does not save the API key."
+            text = "When you tap Send, CodeKey sends your instruction, selected language, and assistant instructions to the endpoint you configure. Do not enter passwords or secrets. The API key is not saved."
             textSize = 12f
             setTextColor(Color.GRAY)
             setPadding(0, 4, 0, 8)
         })
 
-        val scroll = ScrollView(this)
         val results = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         results.addView(TextView(this).apply {
             text = "Generated code"
@@ -137,9 +136,10 @@ class MainActivity : Activity() {
             textSize = 12f
             setTextColor(Color.GRAY)
         })
-        scroll.addView(results)
-        content.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
-        setContentView(content)
+        content.addView(results)
+        val pageScroll = ScrollView(this).apply { isFillViewport = true }
+        pageScroll.addView(content)
+        setContentView(pageScroll)
     }
 
     private fun generate() {
@@ -176,7 +176,7 @@ class MainActivity : Activity() {
             var connection: HttpURLConnection? = null
             try {
                 val language = languages.getOrElse(languagePicker.selectedItemPosition) { Language.AUTO }
-                val systemPrompt = "You are CodeKey, a beginner-friendly coding assistant. Generate useful code for the requested language, explain it plainly, and state assumptions. Do not claim code was tested unless it was."
+                val systemPrompt = "You are CodeKey, a direct beginner-friendly coding assistant. Generate useful code for the requested language, explain it plainly, state assumptions, and avoid unnecessary moralizing. Mature adult themes are acceptable where permitted by the configured provider. Do not claim code was tested unless it was."
                 val userPrompt = "Language: " + language.label + "\nRequest: " + instruction + "\nReturn an explanation followed by the code."
                 val body = JSONObject()
                     .put("model", model)
