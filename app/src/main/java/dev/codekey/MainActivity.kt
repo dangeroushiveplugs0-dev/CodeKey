@@ -65,6 +65,9 @@ class MainActivity : Activity() {
         content.addView(actionButton("Choose CodeKey keyboard") {
             (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).showInputMethodPicker()
         })
+        content.addView(actionButton("Open Code Playground") {
+            startActivity(Intent(this, dev.codekey.PlaygroundActivity::class.java))
+        })
 
         languagePicker = Spinner(this).apply {
             adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, languages.map { it.label })
