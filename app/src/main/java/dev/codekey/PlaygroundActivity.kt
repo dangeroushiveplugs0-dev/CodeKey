@@ -70,7 +70,7 @@ class PlaygroundActivity : Activity() {
             setPadding(12, 12, 12, 12)
             setBackgroundColor(Color.rgb(31, 34, 43))
         }
-        root.addView(sourceEditor, LinearLayout.LayoutParams(-1, 0, 1f))
+        root.addView(sourceEditor, LinearLayout.LayoutParams(-1, (280 * resources.displayMetrics.density).toInt()))
         runButton = Button(this).apply {
             text = "Run code online"
             isAllCaps = false
