@@ -80,12 +80,16 @@ class PlaygroundActivity : Activity() {
                     if (webMode) {
                         stdinEditor.visibility = View.GONE
                         sourceEditor.hint = "Enter a complete HTML document, including optional <style> and <script> tags"
-                        if (sourceEditor.text.isBlank()) sourceEditor.setText(defaultWebPage())
+                        if (sourceEditor.text.isBlank() || sourceEditor.text.toString() == defaultCode()) {
+                            sourceEditor.setText(defaultWebPage())
+                        }
                     } else {
                         preview.visibility = View.GONE
                         stdinEditor.visibility = View.VISIBLE
                         sourceEditor.hint = "Write your code here"
-                        if (sourceEditor.text.isBlank()) sourceEditor.setText(defaultCode())
+                        if (sourceEditor.text.isBlank() || sourceEditor.text.toString() == defaultWebPage()) {
+                            sourceEditor.setText(defaultCode())
+                        }
                     }
                 }
             }
