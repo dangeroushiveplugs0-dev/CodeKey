@@ -17,6 +17,7 @@ import dev.codekey.engine.SuggestionEngine
 class CodeKeyInputMethodService : InputMethodService() {
     private val engine = SuggestionEngine()
     private var language = Language.AUTO
+    private var passwordField = false
     private lateinit var suggestionsRow: LinearLayout
     private lateinit var root: LinearLayout
     private val bg = Color.rgb(22, 24, 30)
@@ -71,7 +72,9 @@ class CodeKeyInputMethodService : InputMethodService() {
                 android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD,
                 android.text.InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD
             )
-        if (password) {
+        passwordField = password || (klass == android.text.InputType.TYPE_CLASS_NUMBER &&
+            variation == android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD)
+        if (passwordField) {
             suggestionsRow.removeAllViews()
             suggestionsRow.addView(label("Suggestions disabled for password fields", Color.LTGRAY, 12f))
         } else refreshSuggestions()
@@ -80,12 +83,26 @@ class CodeKeyInputMethodService : InputMethodService() {
     private fun pressKey(value: String) {
         val ic = currentInputConnection ?: return
         when (value) {
-            "⌫" -> ic.deleteSurroundingText(1, 0)
+            "⌫" -> {
+                val before = ic.getTextBeforeCursor(1, 0)?.toString().orEmpty()
+                val after = ic.getTextAfterCursor(1, 0)?.toString().orEmpty()
+                val closing = mapOf("(" to ")", "[" to "]", "{" to "}", "\"" to "\"", "'" to "'")
+                if (before in closing.keys && after == closing[before]) ic.deleteSurroundingText(1, 1)
+                else ic.deleteSurroundingText(1, 0)
+            }
             "↵", "⏎" -> ic.commitText("\n", 1)
             "space" -> ic.commitText(" ", 1)
             "tab" -> ic.commitText("    ", 1)
             "123" -> showToast("Number row coming soon")
-            else -> ic.commitText(value, 1)
+            "(" , "[" , "{" -> insertPair(value, mapOf("(" to ")", "[" to "]", "{" to "}")[value]!!)
+            "\"" , "'" -> insertPair(value, value)
+            else -> {
+                val after = ic.getTextAfterCursor(1, 0)?.toString().orEmpty()
+                if (value in listOf(")", "]", "}") && after == value) {
+                    val cursor = cursorPosition(ic)
+                    if (cursor >= 0) ic.setSelection(cursor + 1, cursor + 1)
+                } else ic.commitText(value, 1)
+            }
         }
         refreshSuggestions()
     }
@@ -93,6 +110,7 @@ class CodeKeyInputMethodService : InputMethodService() {
     private fun refreshSuggestions() {
         if (!::suggestionsRow.isInitialized) return
         suggestionsRow.removeAllViews()
+        if (passwordField) return
         val ic = currentInputConnection ?: return
         val before = ic.getTextBeforeCursor(80, 0)?.toString().orEmpty()
         val token = before.takeLastWhile { it.isLetterOrDigit() || it == '_' }
@@ -101,11 +119,24 @@ class CodeKeyInputMethodService : InputMethodService() {
             suggestionsRow.addView(label("Type code to see suggestions", Color.LTGRAY, 12f))
         } else results.forEach { suggestion ->
             suggestionsRow.addView(key(suggestion.text, accent) {
+                val currentBefore = ic.getTextBeforeCursor(80, 0)?.toString().orEmpty()
+                val currentToken = currentBefore.takeLastWhile { it.isLetterOrDigit() || it == '_' }
+                if (currentToken.isNotEmpty()) ic.deleteSurroundingText(currentToken.length, 0)
                 ic.commitText(suggestion.text, 1)
                 refreshSuggestions()
             }, weighted())
         }
     }
+
+    private fun insertPair(open: String, close: String) {
+        val ic = currentInputConnection ?: return
+        ic.commitText(open + close, 1)
+        val cursor = cursorPosition(ic)
+        if (cursor >= 0) ic.setSelection(cursor - close.length, cursor - close.length)
+    }
+
+    private fun cursorPosition(ic: android.view.inputmethod.InputConnection): Int =
+        ic.getExtractedText(android.view.inputmethod.ExtractedTextRequest(), 0)?.selectionStart ?: -1
 
     private fun cycleLanguage() {
         val languages = Language.entries
