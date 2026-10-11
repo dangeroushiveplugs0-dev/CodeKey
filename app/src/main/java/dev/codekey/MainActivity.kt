@@ -20,6 +20,11 @@ import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import android.text.InputType
+import org.json.JSONArray
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 import dev.codekey.engine.SuggestionEngine
 import dev.codekey.engine.Language
 
@@ -30,6 +35,9 @@ class MainActivity : Activity() {
     private lateinit var codeOutput: TextView
     private lateinit var explanationOutput: TextView
     private var generatedCode = ""
+    private lateinit var onlineEndpoint: EditText
+    private lateinit var onlineModel: EditText
+    private lateinit var onlineKey: EditText
     private val languages = Language.entries.toList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -120,6 +128,72 @@ class MainActivity : Activity() {
         generatedCode = result.code
         codeOutput.text = if (result.code.isBlank()) "Enter an instruction first." else result.code
         explanationOutput.text = result.explanation
+    }
+
+    private fun settingsField(fieldHint: String, initial: String, secret: Boolean = false) = EditText(this).apply {
+        hint = fieldHint
+        setText(initial)
+        setTextColor(Color.WHITE)
+        setHintTextColor(Color.GRAY)
+        textSize = 14f
+        if (secret) inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+        setPadding(10, 8, 10, 8)
+    }
+
+    private fun generateOnline() {
+        val endpoint = onlineEndpoint.text.toString().trim()
+        val model = onlineModel.text.toString().trim()
+        val apiKey = onlineKey.text.toString()
+        val instruction = requestInput.text.toString().trim()
+        if (endpoint.isBlank() || model.isBlank() || instruction.isBlank()) {
+            Toast.makeText(this, "Enter an instruction, endpoint, and model name first.", Toast.LENGTH_LONG).show()
+            return
+        }
+        getSharedPreferences("codekey_settings", Context.MODE_PRIVATE).edit()
+            .putString("endpoint", endpoint).putString("model", model).apply()
+        explanationOutput.text = "Sending only your instruction to the configured endpoint…"
+        Thread {
+            var connection: HttpURLConnection? = null
+            try {
+                val language = languages.getOrElse(languagePicker.selectedItemPosition) { Language.AUTO }
+                val systemPrompt = "You are CodeKey, a beginner-friendly coding assistant. Generate useful code for the requested language, explain it plainly, and state assumptions. Do not claim code was tested unless it was."
+                val userPrompt = "Language: " + language.label + "\nRequest: " + instruction + "\nReturn an explanation followed by the code."
+                val body = JSONObject()
+                    .put("model", model)
+                    .put("messages", JSONArray()
+                        .put(JSONObject().put("role", "system").put("content", systemPrompt))
+                        .put(JSONObject().put("role", "user").put("content", userPrompt)))
+                    .put("temperature", 0.3)
+                connection = URL(endpoint).openConnection() as HttpURLConnection
+                connection.requestMethod = "POST"
+                connection.connectTimeout = 15000
+                connection.readTimeout = 60000
+                connection.doOutput = true
+                connection.setRequestProperty("Content-Type", "application/json")
+                if (apiKey.isNotBlank()) connection.setRequestProperty("Authorization", "Bearer " + apiKey)
+                connection.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
+                val status = connection.responseCode
+                val stream = if (status in 200..299) connection.inputStream else connection.errorStream
+                val response = stream.bufferedReader().use { it.readText() }
+                if (status !in 200..299) throw IllegalStateException("HTTP " + status + ": " + response.take(300))
+                val answer = JSONObject(response).getJSONArray("choices")
+                    .getJSONObject(0).getJSONObject("message").getString("content")
+                runOnUiThread {
+                    generatedCode = answer
+                    codeOutput.text = answer
+                    explanationOutput.text = "Online AI response. Review the output before using it. Copy code copies the full response."
+                    onlineKey.setText("")
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    explanationOutput.text = "Online request failed: " + (error.message ?: "unknown error") +
+                        ". Check the endpoint, model name, network, and API key."
+                    onlineKey.setText("")
+                }
+            } finally {
+                connection?.disconnect()
+            }
+        }.start()
     }
 
     private fun actionButton(title: String, action: () -> Unit) = Button(this).apply {
