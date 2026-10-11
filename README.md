@@ -14,10 +14,12 @@ CodeKey is intended to be an open, user-controlled coding assistant rather than 
 - Language selector covering Python, JavaScript, TypeScript, HTML, CSS, Kotlin, Java, C/C++, C#, JSON, SQL, and Bash.
 - Password-field suggestion suppression.
 - GitHub Actions debug APK artifact on every push to main and manual dispatch.
+- Offline English-to-code starter examples with explanations and copy support.
+- Optional, explicit OpenAI-compatible chat-completions requests using a configurable endpoint and model.
 
 ## English-to-code assistant
 
-The offline starter generator supports common beginner patterns such as greetings/output, variables, functions, loops, conditions, and buttons. It provides an explanation and should always show the generated code before the user chooses to insert it. It is a starter template engine, not a model that understands arbitrary instructions.
+The offline starter generator supports common beginner patterns such as greetings/output, variables, functions, loops, conditions, and buttons. It provides an explanation and shows the generated example before copying. It is a starter template engine, not a model that understands arbitrary instructions. The optional online path sends a request only after the user taps its button and uses a configurable OpenAI-compatible endpoint.
 
 ## Build
 
@@ -33,7 +35,7 @@ GitHub Actions runs Gradle assembleDebug with JDK 17 and uploads the CodeKey-deb
 
 ## Privacy
 
-Offline completion does not send typed text to a server. Network AI is optional and must not be called without an explicit user action. Never transmit password-field text or silently upload surrounding text. The keyboard should use only the selected instruction or text the user explicitly approves for an AI request.
+Offline completion and offline code generation do not send text to a server. Online AI is optional and starts only when the user taps its send button; it sends the instruction field, selected language, and assistant prompt to the configured endpoint. The API key is not saved by CodeKey and is cleared after each request. Do not enter passwords or secrets. Never transmit password-field text or silently upload surrounding text.
 
 ## License
 
