@@ -24,7 +24,9 @@ The offline starter generator supports common beginner patterns such as greeting
 
 ## Code Playground
 
-The playground currently offers Python, JavaScript, TypeScript, Java, C, C++, C#, Go, Rust, PHP, Ruby, Bash, Kotlin, Swift, R, Perl, Lua, Dart, Scala, and Elixir choices. Execution is an explicit online action using the public Piston runner; code is sent to that service when Run is tapped. Do not submit secrets or private source code. Runner language availability and versions may change, and this is not offline execution. HTML/CSS live preview and fully local sandbox execution remain future work.
+The playground offers Python, JavaScript, TypeScript, Java, C, C++, C#, Go, Rust, PHP, Ruby, Bash, Kotlin, Swift, R, Perl, Lua, Dart, Scala, and Elixir through the public Piston runner. Online execution is explicit: source code and the optional stdin field are sent to Piston only when Run is tapped. Do not submit secrets or private source code. Runner language availability and versions may change.
+
+The HTML / CSS / JS mode previews a complete HTML document in an on-device WebView, including embedded styles and scripts. External navigation and network resource requests are blocked in that preview. Draft source, selected language, and stdin are saved locally on the device. This preview is not a general-purpose secure sandbox for untrusted code; only preview code you understand. Other language execution still requires the online runner.
 
 ## Build
 
@@ -35,7 +37,7 @@ GitHub Actions runs Gradle assembleDebug with JDK 17 and uploads the CodeKey-deb
 1. Validate keyboard layout and input behavior on real Android devices.
 2. Expand language-aware completions and offline English-to-code patterns.
 3. Add a local-model adapter and a model manager with model-size/RAM estimates.
-4. Add a live HTML/CSS/JavaScript preview and safer offline execution options where feasible.
+4. Expand local web preview controls and investigate truly local execution options where feasible.
 5. Make network requests opt-in, show the destination/provider, and disclose the exact prompt before sending it.
 6. Add tests and release signing configuration.
 
