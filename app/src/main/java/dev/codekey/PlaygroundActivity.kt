@@ -82,6 +82,7 @@ class PlaygroundActivity : Activity() {
                         sourceEditor.hint = "Enter a complete HTML document, including optional <style> and <script> tags"
                         if (sourceEditor.text.isBlank()) sourceEditor.setText(defaultWebPage())
                     } else {
+                        preview.visibility = View.GONE
                         stdinEditor.visibility = View.VISIBLE
                         sourceEditor.hint = "Write your code here"
                         if (sourceEditor.text.isBlank()) sourceEditor.setText(defaultCode())
@@ -207,6 +208,7 @@ class PlaygroundActivity : Activity() {
             outputView.text = "Enter code before running it."
             return
         }
+        val stdin = stdinEditor.text.toString()
         runButton.isEnabled = false
         runButton.text = "Running…"
         outputView.text = "Sending code to the runner…"
@@ -217,7 +219,7 @@ class PlaygroundActivity : Activity() {
                     .put("language", runtime.id)
                     .put("version", runtime.version)
                     .put("files", JSONArray().put(JSONObject().put("content", source)))
-                    .put("stdin", stdinEditor.text.toString())
+                    .put("stdin", stdin)
                     .put("args", JSONArray())
                     .put("compile_timeout", 10000)
                     .put("run_timeout", 5000)
